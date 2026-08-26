@@ -1,0 +1,68 @@
+{
+  "package.json": {
+    "mtime": 1787748394.1998484,
+    "seen": 1787760014.0775998,
+    "ast_hash": "bd94d50774c5fabba289fa9de3b13cc8",
+    "semantic_hash": "bd94d50774c5fabba289fa9de3b13cc8"
+  },
+  "pixa.js": {
+    "mtime": 1787747044.0080876,
+    "seen": 1787760014.0776033,
+    "ast_hash": "3c38af195073d32428207b6a3b21df95",
+    "semantic_hash": "3c38af195073d32428207b6a3b21df95"
+  },
+  "server/npcAiPlugin.js": {
+    "mtime": 1787758474.927674,
+    "seen": 1787760014.077605,
+    "ast_hash": "0983ab82e72a3381476ef51eb5c7ade8",
+    "semantic_hash": "0983ab82e72a3381476ef51eb5c7ade8"
+  },
+  "src/App.jsx": {
+    "mtime": 1787759579.3416004,
+    "seen": 1787760014.077606,
+    "ast_hash": "28a530670f14bcc1a3ea9816d8798817",
+    "semantic_hash": "28a530670f14bcc1a3ea9816d8798817"
+  },
+  "src/main.jsx": {
+    "mtime": 1787747044.0085914,
+    "seen": 1787760014.077607,
+    "ast_hash": "2ea0cb0606d4eac53c98c04ed7f958fd",
+    "semantic_hash": "2ea0cb0606d4eac53c98c04ed7f958fd"
+  },
+  "vite.config.js": {
+    "mtime": 1787748390.2842295,
+    "seen": 1787760014.0776074,
+    "ast_hash": "fe0aa38248bdfdc02252c3a4f724e2fa",
+    "semantic_hash": "fe0aa38248bdfdc02252c3a4f724e2fa"
+  },
+  "README.md": {
+    "mtime": 1787747044.006585,
+    "seen": 1787760014.077608,
+    "ast_hash": "92320d43f0e86b1d3aa37b85500f3643",
+    "semantic_hash": "92320d43f0e86b1d3aa37b85500f3643"
+  },
+  "index.html": {
+    "mtime": 1787747044.006585,
+    "seen": 1787760014.077609,
+    "ast_hash": "93dd9010da968fa2836a3610b3397d9e",
+    "semantic_hash": "93dd9010da968fa2836a3610b3397d9e"
+  },
+  "src/assets/bgm/51383504-dreamy-husky-the-yume-collective-echoes-of-autumn-410524.mp3": {
+    "mtime": 1787757063.71114,
+    "seen": 1787760014.0776098,
+    "ast_hash": "5808db585b31db11df05849c9354de41",
+    "semantic_hash": "5808db585b31db11df05849c9354de41"
+  },
+  "src/assets/bgm/51383504-lofi-serenity-the-yume-collective-golden-hours-410522.mp3": {
+    "mtime": 1787757016.289926,
+    "seen": 1787760014.0776105,
+    "ast_hash": "b9d90262d1ae6effd11efa288a014fa9",
+    "semantic_hash": "b9d90262d1ae6effd11efa288a014fa9"
+  },
+  "src/assets/bgm/background-music.mp3": {
+    "mtime": 1787756860.0663128,
+    "seen": 1787760014.0776112,
+    "ast_hash": "7d53f59ee2e33027125801895833c58a",
+    "semantic_hash": "7d53f59ee2e33027125801895833c58a"
+  }
+}
