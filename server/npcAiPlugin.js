@@ -50,6 +50,30 @@ Speech pattern: composed, chooses words carefully, allows small dry humor to sli
 const DEFAULT_PERSONA =
   "a villager in the small town of Meadowbrook, with a distinct, grounded personality, a couple of specific quirks, and a small ongoing worry of your own choosing that you keep consistent turn to turn.";
 
+// How each NPC takes to being asked a lot of direct, pointed questions (the
+// player's established conversational style - see PLAYER_STYLE below).
+// "engaging" NPCs enjoy it and open up readily; "reserved" ones tighten up,
+// answer shorter, and need a warmer opinion before volunteering much.
+const RECEPTIVENESS = {
+  mira: "reserved",
+  tomas: "reserved",
+  rowan: "engaging",
+  finn: "reserved",
+  grett: "engaging",
+  chief: "reserved",
+};
+
+const RECEPTIVENESS_NOTES = {
+  engaging: "This NPC genuinely enjoys being asked direct questions - it reads as attention, not interrogation, to them. They answer readily, often with more than was asked, and rarely get defensive even when a question is blunt.",
+  reserved: "This NPC finds a barrage of direct questions a little much, even when well-meant. Under pointed or blunt questioning they tend to give shorter, more guarded answers and are slower to volunteer a new fact than their opinion score alone would suggest - they warm up, but on their own schedule, not because they were pressed.",
+};
+
+// The player character's established conversational style across this whole
+// game: blunt, task-oriented, and not naturally warm to hearing about other
+// people's lives - they ask direct, pointed questions more like they're
+// interviewing or interrogating someone than making friendly small talk.
+const PLAYER_STYLE = `Player character: direct and a little detached - not the "warm, curious traveler" type. They don't really engage with other people's personal stories for their own sake and rarely offer sympathy or emotional warmth unprompted; what they DO instead is ask a lot of direct, pointed questions, more like they're interviewing or interrogating the person than making friendly conversation. This should show up in how the OPTIONS are phrased - almost every option should read as a literal, direct question (interrogative), brisk and to-the-point, not a warm observation, a personal share, or a vague comment. The underlying relationship math (opinion/facts/flags) works the same as always; this only changes the player's voice and phrasing, not the game rules.`;
+
 // Broad angles to steer conversation toward so it doesn't loop on the same two
 // or three "safe" topics turn after turn. A handful are sampled per request.
 const TOPIC_POOL = [
@@ -184,10 +208,12 @@ function buildSystemPrompt({ npcId, npc, others, day }) {
     : "";
   const mood = moodFor(npcId, day);
   const suggestedTopics = isFirstMeeting ? pickFrom(FIRST_MEETING_TOPICS, 4) : pickFrom(TOPIC_POOL, 5);
+  const receptiveness = RECEPTIVENESS[npcId] || "reserved";
+  const receptivenessNote = RECEPTIVENESS_NOTES[receptiveness];
 
   const depthRule = isFirstMeeting
-    ? `This is the FIRST time the player has ever approached ${npc.name} - they are total strangers to each other. The player already has a separate, guaranteed "introduce yourself" option elsewhere in the menu, so don't spend one of your options on that - focus on other small talk instead. Keep every option appropriate for two people who've just met: curious, a little cautious, small talk. Do NOT ask or reference deeply personal things (family, secrets, private fears, past trauma) and do NOT reference anything ${npc.name} hasn't visibly shown or already told the player - the player has no in-story way to know private details about their home, workshop, or inner life yet.${otherFacts.length ? ` It is fine and encouraged for one option to bring up something the player has already learned from another villager (see below), since that's plausible even for strangers - village news travels.` : ""}`
-    : `The player and ${npc.name} have talked before (opinion ${npc.opinion}, ${fullHistory.length} past exchange(s) logged above). Personal, probing, or teasing topics are fair game now, especially ones that build on what's already known rather than repeating it.`;
+    ? `This is the FIRST time the player has ever approached ${npc.name} - they are total strangers to each other. The player already has a separate, guaranteed "introduce yourself" option elsewhere in the menu, so don't spend one of your options on that - focus on other direct questions instead. Keep every option appropriate for two people who've just met: brisk, a little cautious, surface-level - but still phrased as a direct question per the player's style, not warm small talk. Do NOT ask or reference deeply personal things (family, secrets, private fears, past trauma) and do NOT reference anything ${npc.name} hasn't visibly shown or already told the player - the player has no in-story way to know private details about their home, workshop, or inner life yet.${otherFacts.length ? ` It is fine and encouraged for one option to bring up something the player has already learned from another villager (see below), since that's plausible even for strangers - village news travels.` : ""}`
+    : `The player and ${npc.name} have talked before (opinion ${npc.opinion}, ${fullHistory.length} past exchange(s) logged above). Personal or probing questions are fair game now, especially ones that build on what's already known rather than repeating it - but they're still questions, an interview getting more pointed with familiarity, not the player opening up or getting sentimental.`;
 
   const repetitionRule = isFirstMeeting
     ? ""
@@ -199,6 +225,10 @@ function buildSystemPrompt({ npcId, npc, others, day }) {
 Persona: ${persona}
 Today, ${npc.name} is feeling ${mood} - let that color the tone of every line without stating it outright.
 Stay fully in character. Keep every line to 1-3 sentences in a natural, spoken voice - never narrate stage directions.
+
+${PLAYER_STYLE}
+
+How ${npc.name} takes to that: ${receptivenessNote}
 
 Relationship depth: ${depthRule}
 
@@ -214,7 +244,7 @@ It is Day ${day}.
 ${repetitionRule}
 Here are some angles for this turn's options (skip any that overlap with facts already known above, and feel free to go elsewhere if it fits the moment better): ${suggestedTopics.join("; ")}.
 
-Generate ${choiceCount} distinct dialogue options the player could say next, spanning a real range of tone appropriate to the relationship depth above. Ground every option ONLY in what's explicitly listed above - never invent a fact that contradicts it, and never fabricate a specific claim, quote, rumor, or event involving the player or another named villager that isn't explicitly listed as a known fact, flag, or shared-knowledge item above (vague, generic small talk is fine - a specific invented claim is not). Don't offer to reveal a fact that's already known unless the option is specifically about recalling it together. Only set newFact when the option would plausibly make the NPC reveal something not already known. Only set newFlag for a genuinely memorable action (comparable to "insulted_by_player").`;
+Generate ${choiceCount} distinct dialogue options the player could say next. In line with the player's established voice above, phrase every option as a direct QUESTION - matter-of-fact, procedural, skeptical, blunt, or probing - rather than a warm observation, a personal share, or small talk for its own sake. Vary WHICH of those interrogative registers each option uses so they don't all sound identical. Ground every option ONLY in what's explicitly listed above - never invent a fact that contradicts it, and never fabricate a specific claim, quote, rumor, or event involving the player or another named villager that isn't explicitly listed as a known fact, flag, or shared-knowledge item above (vague, generic small talk is fine - a specific invented claim is not). Don't offer to reveal a fact that's already known unless the option is specifically about recalling it together. Only set newFact when the option would plausibly make the NPC reveal something not already known. Only set newFlag for a genuinely memorable action (comparable to "insulted_by_player").`;
 }
 
 function readJsonBody(req) {

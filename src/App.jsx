@@ -28,7 +28,8 @@ const VIEW_H = VIEW_TILES_H * TILE; // 520 - viewport height in px
 
 // Map legend: 0 grass, 1 path, 2 water, 3 tree(solid), 4 flower, 5 fence(solid),
 // 6 house wall(solid), 7 house door, 8 dock plank, 9 mine rock(solid),
-// 10 mine entrance, 11 town-square stone, 12 well(solid), 13 interior wood floor
+// 10 mine entrance, 11 town-square stone, 12 well(solid), 13 interior wood floor,
+// 14 cave floor, 15 gem (decorative, not interactable), 16 rubble(solid)
 //
 // Four quadrants: NW village (original, untouched interior) / NE town square,
 // SW dock / SE mine - connected by corridor gaps cut through the shared
@@ -56,7 +57,7 @@ const MAP = [
   [3,0,0,0,0,0,0,0,0,0,0,0,0,0,0,3, 3,0,0,0,0,0,0,0,0,0,0,0,0,3],
   [3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3, 3,3,3,3,3,3,3,3,3,3,3,3,3,3],
 ];
-const SOLID = new Set([2, 3, 5, 6, 9, 12]);
+const SOLID = new Set([2, 3, 5, 6, 9, 12, 16]);
 
 // ---------- NPC MEMORY ENGINE ----------
 // Each NPC has: opinion (numeric affinity), facts (structured memory of what player told them),
@@ -65,7 +66,8 @@ const initialNPCs = {
   mira: {
     name: "Mira",
     role: "Herbalist",
-    x: 4, y: 3,
+    x: 2, y: 2,
+    scene: "mira_house",
     color: "#e0a458",
     sprite: "herbalist",
     opinion: 0,
@@ -77,7 +79,8 @@ const initialNPCs = {
   tomas: {
     name: "Tomas",
     role: "Blacksmith",
-    x: 9, y: 3,
+    x: 5, y: 2,
+    scene: "tomas_house",
     color: "#8a8a9a",
     sprite: "smith",
     opinion: 0,
@@ -412,6 +415,9 @@ function tileColor(v) {
     case 11: return "#8a8a86";
     case 12: return "#5c6670";
     case 13: return "#7a5a3a";
+    case 14: return "#4a3f38";
+    case 15: return "#5ec8d8";
+    case 16: return "#3a3238";
     default: return "#5a9c4a";
   }
 }
@@ -471,12 +477,64 @@ const INTERIORS = {
     entry: { x: 4.5, y: 4 },
     exitTile: { x: 4, y: 5 },
   },
+  mira_house: {
+    name: "Mira's House",
+    map: [
+      [6,6,6,6,6,6,6],
+      [6,13,13,13,13,13,6],
+      [6,13,13,13,13,13,6],
+      [6,13,13,13,13,13,6],
+      [6,13,13,13,13,13,6],
+      [6,6,6,7,6,6,6],
+    ],
+    entry: { x: 3.5, y: 4 },
+    exitTile: { x: 3, y: 5 },
+  },
+  tomas_house: {
+    name: "Tomas's House",
+    map: [
+      [6,6,6,6,6,6,6,6],
+      [6,13,13,13,13,13,13,6],
+      [6,13,13,13,13,13,13,6],
+      [6,13,13,13,13,13,13,6],
+      [6,6,6,7,6,6,6,6],
+    ],
+    entry: { x: 3.5, y: 3 },
+    exitTile: { x: 3, y: 4 },
+  },
+  // A big, mostly-decorative cavern ("not interactable for now" per request) -
+  // gems (15) are just color, not items. Door at the TOP, cave extending
+  // downward: the world entrance is walked into heading south, so continuing
+  // "further into the mine" should keep going down, not reverse into up, or
+  // the direction flip feels like getting lost right after entering. The
+  // rubble-blocked (16) area at the bottom is the deliberate nod to the
+  // mine-collapse sign at the entrance - there's more mine than you can reach.
+  mine_interior: {
+    name: "The Mine",
+    map: [
+      [9,9,9,9,9,9,9,7,9,9,9,9,9,9],
+      [9,14,14,14,14,14,14,14,14,14,14,14,14,9],
+      [9,14,14,9,14,14,9,14,14,14,9,14,14,9],
+      [9,14,15,14,14,14,14,14,14,14,14,14,14,9],
+      [9,14,9,14,14,14,14,14,14,14,14,9,16,9],
+      [9,14,14,14,14,9,9,14,14,9,16,16,16,9],
+      [9,14,14,14,14,14,14,14,14,14,16,16,16,9],
+      [9,14,14,14,9,14,14,9,14,14,16,16,16,9],
+      [9,9,9,9,9,9,9,9,9,9,9,9,9,9],
+    ],
+    entry: { x: 7.5, y: 1 },
+    exitTile: { x: 7, y: 0 },
+  },
 };
 
 // World door-tile coordinates ("x,y") that lead into an interior.
 const WORLD_ENTRANCES = {
   "19,3": "rowan_shop",
   "26,3": "town_hall",
+  "4,2": "mira_house",
+  "10,2": "tomas_house",
+  "22,14": "mine_interior",
+  "23,14": "mine_interior",
 };
 
 // ---------- MAIN APP ----------
@@ -496,6 +554,11 @@ export default function App() {
   const sceneRef = useRef("world");
   useEffect(() => { sceneRef.current = scene; }, [scene]);
   const returnPosRef = useRef(null); // world {x,y} to restore on exiting an interior
+  // The last position the player actually stood on in the world that WASN'T
+  // a door tile - used as the exit destination instead of a blind "+1 row"
+  // offset, since the tile past a door isn't always open ground (e.g. the
+  // mine entrance has solid rock on both sides, not just below it).
+  const lastSafeWorldPosRef = useRef({ x: 7.5, y: 6 });
   const [dialogueLine, setDialogueLine] = useState(null);
   const [choices, setChoices] = useState([]);
   const [toast, setToast] = useState(null);
@@ -721,11 +784,15 @@ export default function App() {
       if (curScene === "world") {
         const targetId = WORLD_ENTRANCES[`${px},${py}`];
         if (targetId) {
-          returnPosRef.current = { x: playerRef.current.x, y: playerRef.current.y + 1 };
+          // Use the last spot we know was safe to stand on, not an offset
+          // guess - the tile past a door isn't reliably open ground.
+          returnPosRef.current = { ...lastSafeWorldPosRef.current };
           setScene(targetId);
           setPlayer({ x: INTERIORS[targetId].entry.x, y: INTERIORS[targetId].entry.y, dir: "up" });
           setToast(`Entered ${INTERIORS[targetId].name}.`);
           setTimeout(() => setToast(null), 2200);
+        } else {
+          lastSafeWorldPosRef.current = { x: playerRef.current.x, y: playerRef.current.y };
         }
       } else {
         const exit = INTERIORS[curScene].exitTile;
